@@ -275,9 +275,9 @@ int main(int argc, char* argv[]) {
         vector <char> output = compress(buff);
         cout << buff.size() << " Bytes Original \n";
         cout << output.size() << " Bytes Compressed \n";
-        double ratio = static_cast<double>(output.size()) / buff.size(); 
-        cout << ratio * 100.0 << "% Compression Ratio \n";
-
+        double ratio = static_cast<double>(buff.size()) / output.size(); 
+        std::cout << "Compression ratio: " << ratio << ":1\n";
+    
         save_file(std::string(argv[3]), output);
     } else if (std::string(argv[1]) == "-d"){
 

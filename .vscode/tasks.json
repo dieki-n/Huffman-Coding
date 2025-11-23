@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build main",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "main.cpp",
+                "-o",
+                "huffman.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}

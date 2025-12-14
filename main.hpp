@@ -8,6 +8,8 @@ using namespace std;
 std::string to_string(uint64_t bits, int len);
 uint64_t bitswap(uint64_t bits, int len);
 
+
+
 struct Huffman_Node{
     int character;
     int frequency;

@@ -9,9 +9,11 @@
 #include <filesystem>
 
 #include "main.hpp"
+#include "lz77.hpp"
 
 using namespace std;
 
+//deflate rfc: https://datatracker.ietf.org/doc/html/rfc1951
 
 std::string to_string(uint64_t bits, int len) {
     std::string s;
@@ -64,6 +66,7 @@ uint64_t bitswap(uint64_t bits, int len){
     }
     return t;
 }
+
 void build_dictionary_recursive(
         shared_ptr<Huffman_Node> node, 
         vector<unique_ptr<Huffman_Dict>>& dict,
@@ -198,6 +201,7 @@ shared_ptr<Huffman_Node> create_tree_from_dict(vector<unique_ptr<Huffman_Dict>>&
 }
 
 
+
 vector <char> compress(vector<char> input_buff){
     uint64_t bitstring_buff = 0;
     int bitstring_len = 0;
@@ -259,6 +263,39 @@ vector <char> decompress(vector<char> input_buff){
     return output_buff;
 }
 
+vector <char> deflate_compress(vector<char> input_buff){
+    uint64_t bitstring_buff = 0;
+    int bitstring_len = 0;
+
+    auto tree = create_tree(input_buff);
+    auto char_dict = build_dictionary(tree);
+    vector<char> output_buff = pack_dictionary(char_dict);
+
+    vector<unique_ptr<Huffman_Dict>> dict(257);
+    for (auto& ch : char_dict){
+        dict[ch->character] = move(ch);
+    }
+
+    for (int i = 0; i < input_buff.size(); i++){  
+        bitstring_buff += dict[input_buff[i]]->bits << bitstring_len;
+        bitstring_len += dict[input_buff[i]]->len;
+        while (bitstring_len >= 8){
+            output_buff.push_back(bitstring_buff & 255);
+            bitstring_buff >>= 8;
+            bitstring_len = bitstring_len - 8;
+        }
+    }
+
+    //add EOF marker
+    bitstring_buff += dict[256]->bits << bitstring_len;
+    bitstring_len += dict[256]->len;
+    while (bitstring_len > 0){
+        output_buff.push_back(bitstring_buff & 255);
+        bitstring_buff >>= 8;
+        bitstring_len = bitstring_len - 8;
+    }
+    return output_buff;
+}
 
 
 int main(int argc, char* argv[]) {
@@ -271,7 +308,7 @@ int main(int argc, char* argv[]) {
             cerr << argv[2] << " file not found";
             return 1;
         }
-        vector <char> buff = load_file(std::string(argv[2]));
+        vector <char> buff = load_file(std::string(argv[2]));        
         vector <char> output = compress(buff);
         cout << buff.size() << " Bytes Original \n";
         cout << output.size() << " Bytes Compressed \n";
@@ -297,14 +334,5 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-
-    // auto dict = unpack_dictionary(output);
-    // for (int i = 0; i < dict.size(); i++){
-    //     if (dict[i]){
-    //         cout << dict[i]->character << " " 
-    //         << static_cast<unsigned char>(dict[i]->character) << ": " 
-    //         << to_string(dict[i]->bits, dict[i]->len) << "\n";
-    //     }
-    // }
     return 0;
 }
